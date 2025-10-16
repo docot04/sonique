@@ -1,7 +1,0 @@
-CREATE TABLE IF NOT EXISTS Songs (
-    id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    spotify_ID VARCHAR(25) NOT NULL,
-    youtube_ID VARCHAR(25) NOT NULL,
-    hash_time INT NOT NULL,
-    hash_value VARCHAR(50) NOT NULL,
-)

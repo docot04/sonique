@@ -12,6 +12,8 @@ def dummy_fingerprint(file_path: str, song_id: str):
             :10
         ]
         time = round(random.uniform(0.0, 180.0), 2)
-        fingerprints.append({"song_id": song_id, "hash": hash, "time": time})
+        fingerprints.append(
+            {"spotify_ID": song_id, "hash_value": hash, "hash_time": time}
+        )
 
     return fingerprints
