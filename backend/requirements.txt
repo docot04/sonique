@@ -1,0 +1,6 @@
+pydub
+librosa
+numpy
+matplotlib
+fastapi
+uvicorn
