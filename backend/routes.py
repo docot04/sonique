@@ -13,8 +13,8 @@ from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pipeline.load import process_spotify_track
-from pipeline.db import get_dashboard, get_song
+from .pipeline.load import process_spotify_track
+from .pipeline.db import get_dashboard, get_song
 
 router = APIRouter()
 

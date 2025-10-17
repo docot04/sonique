@@ -1,23 +1,72 @@
 import os
-from pipeline.db import save_fingerprints_batch, song_exists
-from engine.spotify_parser import spotify_parser
-from engine.yt_scraper import yt_downloader
-from engine.preprocessor import preprocessor
-from engine.spectrogram import audio_to_spectrogram
-from engine.fingerprinting import *
-from engine.peak_maker import *
+import json
+import sys
+
+# Ensure repo root is on sys.path so absolute package imports work when running the file directly
+_repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
+
+# Use absolute package imports (robust whether run as module or script)
+from backend.engine.spotify_parser import spotify_parser
+from backend.engine.yt_scraper import yt_downloader
+from backend.engine.preprocessor import preprocessor
+from backend.engine.spectrogram import audio_to_spectrogram
+from backend.engine.fingerprinting import *
+from backend.engine.peak_maker import *
+
+DB_JSON = os.path.join(os.path.dirname(__file__), "db_mock.json")
+
+
+def _ensure_db():
+    if not os.path.exists(DB_JSON):
+        with open(DB_JSON, "w") as f:
+            json.dump({"songs": [], "fingerprints": []}, f)
+
+
+def song_exists_json(track_id: str) -> bool:
+    _ensure_db()
+    try:
+        with open(DB_JSON, "r") as f:
+            data = json.load(f)
+        return track_id in data.get("songs", [])
+    except Exception:
+        return False
+
+
+def save_fingerprints_batch_json(fingerprints: list, spotify_id: str, youtube_id: str):
+    _ensure_db()
+    try:
+        with open(DB_JSON, "r") as f:
+            data = json.load(f)
+    except Exception:
+        data = {"songs": [], "fingerprints": []}
+
+    # add spotify and youtube ids to each fingerprint if not present
+    for fprint in fingerprints:
+        if "spotify_ID" not in fprint:
+            fprint["spotify_ID"] = spotify_id
+        if "youtube_ID" not in fprint:
+            fprint["youtube_ID"] = youtube_id
+
+    data.setdefault("fingerprints", []).extend(fingerprints)
+    if spotify_id not in data.get("songs", []):
+        data.setdefault("songs", []).append(spotify_id)
+
+    with open(DB_JSON, "w") as f:
+        json.dump(data, f)
 
 
 def process_spotify_track(track_id: str):
-    """runs complete pipeline for a spotify ID\n
-    **PIPELINE:** check if exists > Spotify metadata > YT search & download > preprocessing > spectrogram > fingerprinting > save to DB > cleanup > return\n
-    **PARAMS:** track_id (spotify)\n
+    """runs complete pipeline for a spotify ID
+    **PIPELINE:** check if exists > Spotify metadata > YT search & download > preprocessing > spectrogram > fingerprinting > save to DB (JSON mock) > cleanup > return
+    **PARAMS:** track_id (spotify)
     **RETURN:** list of dicts [{spotify_ID, youtube_ID, hash, time}]"""
     print(f"\n[START] Processing Spotify ID: {track_id}")
 
     try:
-        # 1: check if song already exists
-        if song_exists(track_id):
+        # 1: check if song already exists (using JSON mock)
+        if song_exists_json(track_id):
             print(f"[WARN] Skipping track {track_id}: Song already exists")
             return [], True
 
@@ -57,20 +106,19 @@ def process_spotify_track(track_id: str):
         S_db = audio_to_spectrogram(processed_path)
         print(f"[INFO] Spectrogram shape: {S_db.shape}")
 
-        # 6: fingerprinting
-        fingerprints = generate_hashes(processed_path, track_id)
-        # for f in fingerprints:
-        #     f["spotify_ID"] = track_id
-        #     f["youtube_ID"] = youtube_id
-        # can be put to something else , doesn't seem needed here  , for now
-        print(f"[INFO] Generated {len(fingerprints)} fingerprints")
 
-        #6.5 peak making from spectrogram
         peaks = extract_peaks(S_db)
         print(f"[INFO] Extracted {len(peaks)} peaks from spectrogram")
 
-        # 7: save to DB
-        save_fingerprints_batch(fingerprints)
+        # 6: fingerprinting
+        fingerprints = generate_hashes(peaks, track_id)
+        print(f"[INFO] Generated {len(fingerprints)} fingerprints")
+
+        # 6.5 peak making from spectrogram
+
+
+        # 7: save to DB -> using JSON mock now
+        save_fingerprints_batch_json(fingerprints, track_id, youtube_id)
 
         # 8: cleanup
         for path in [audio_path, processed_path]:
@@ -82,3 +130,6 @@ def process_spotify_track(track_id: str):
     except Exception as e:
         print(f"[ERROR] Failed to process {track_id}: {e}")
         return [], True
+
+
+process_spotify_track("4VbpKAZKVxzY7JpGQ34zMj")

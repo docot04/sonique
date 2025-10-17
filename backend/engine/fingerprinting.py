@@ -28,7 +28,7 @@ def generate_hashes(peaks,track_id,fanout=5,max_time_delta=50):
             # relative timing survices temp changes and audio compression hence also having time_delta
             hash_value = create_hash(anchor_freq,target_freq,time_delta)
             # creating hash from three things as it will make it more unique
-            hashes.append((hash_value,anchor_time))
+            hashes.append({"hash": hash_value, "time": int(anchor_time), "spotify_ID": track_id})
             # storing anchor time because it allows time based alignment during mathcing/identification
     # do something about track id later TODO
     return hashes
