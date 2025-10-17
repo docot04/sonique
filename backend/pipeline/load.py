@@ -4,7 +4,8 @@ from engine.spotify_parser import spotify_parser
 from engine.yt_scraper import yt_downloader
 from engine.preprocessor import preprocessor
 from engine.spectrogram import audio_to_spectrogram
-from engine.fingerprinting import dummy_fingerprint
+from engine.fingerprinting import *
+from engine.peak_maker import *
 
 
 def process_spotify_track(track_id: str):
@@ -57,12 +58,16 @@ def process_spotify_track(track_id: str):
         print(f"[INFO] Spectrogram shape: {S_db.shape}")
 
         # 6: fingerprinting
-        fingerprints = dummy_fingerprint(processed_path, track_id)
-        for f in fingerprints:
-            f["spotify_ID"] = track_id
-            f["youtube_ID"] = youtube_id
-
+        fingerprints = generate_hashes(processed_path, track_id)
+        # for f in fingerprints:
+        #     f["spotify_ID"] = track_id
+        #     f["youtube_ID"] = youtube_id
+        # can be put to something else , doesn't seem needed here  , for now
         print(f"[INFO] Generated {len(fingerprints)} fingerprints")
+
+        #6.5 peak making from spectrogram
+        peaks = extract_peaks(S_db)
+        print(f"[INFO] Extracted {len(peaks)} peaks from spectrogram")
 
         # 7: save to DB
         save_fingerprints_batch(fingerprints)
