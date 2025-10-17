@@ -1,6 +1,6 @@
 import hashlib
 
-def generate_hashes(peaks,track_id,fanout=5,max_time_delta=50):
+def generate_hashes(peaks,track_id,fanout=5,max_time_delta=10):
     """convers peaks into hashes by creating relationships between them , 
     
     individual peks arent very useful but relationships are unique in songs"""
