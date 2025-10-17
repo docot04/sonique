@@ -9,7 +9,14 @@ Sonique will identify songs by listening to short audio samples and matching the
 
 ## Status
 
-Work in progress (initial setup phase)
+- backend routes completed for loading and dashboard
+- complete pipeline ready for processing new songs; awaiting fingerprinting algorithm
+
+## TODO
+
+- fingerprinting algorithm
+- matching pipeline
+- client-side frontend
 
 ## Contributors
 

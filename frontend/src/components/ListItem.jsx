@@ -1,39 +1,52 @@
-import React from "react";
-import { FaSpotify, FaYoutube } from "react-icons/fa"; // FontAwesome icons
-import "./components.scss";
+import { FaSpotify, FaYoutube } from "react-icons/fa";
 
 export default function ListItem({
   title = "Song Title...",
-  artist = "Song Artist...",
+  artists = "Song Artist...",
   cover,
-  link1,
-  link2,
+  spotify,
+  youtube,
+  loading = false,
 }) {
+  if (loading) {
+    return (
+      <div className="list-item loading">
+        <div className="list-item__cover skeleton cover"></div>
+        <div className="list-item__info">
+          <div className="list-item__title skeleton title"></div>
+          <div className="list-item__artists skeleton artists"></div>
+        </div>
+        <div className="list-item__actions">
+          <div className="list-item__button skeleton button"></div>
+          <div className="list-item__button skeleton button"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="list-item">
       <img src={cover} alt={title} className="list-item__cover" />
-
       <div className="list-item__info">
         <div className="list-item__title">{title}</div>
-        <div className="list-item__artist">{artist}</div>
+        <div className="list-item__artists">{artists}</div>
       </div>
-
       <div className="list-item__actions">
         <a
-          href={link1}
+          href={`https://open.spotify.com/track/${spotify}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn spotify"
+          className="list-item__button spotify"
         >
-          <FaSpotify className="icon" />
+          <FaSpotify />
         </a>
         <a
-          href={link2}
+          href={`https://www.youtube.com/watch?v=${youtube}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn youtube"
+          className="list-item__button youtube"
         >
-          <FaYoutube className="icon" />
+          <FaYoutube />
         </a>
       </div>
     </div>

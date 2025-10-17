@@ -1,12 +1,16 @@
-import { List } from "../components";
-import sampleData from "../data/sample_data.json";
+import { List, ProcessTracks } from "../components";
 
 const Dashboard = () => {
   return (
-    <>
-      <h1 style={{ textAlign: "center" }}>Sonique Matches</h1>
-      <List songIDs={sampleData.songIds} />;
-    </>
+    <div className="dashboard-container">
+      <div className="dashboard-header">
+        <h1>Dashboard</h1>
+      </div>
+      <div className="dashboard-list">
+        {/* <List /> */}
+        <ProcessTracks />
+      </div>
+    </div>
   );
 };
 
