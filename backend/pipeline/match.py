@@ -55,7 +55,7 @@ def match(file_path: str):
         s_db = audio_to_spectrogram(processed_path)
         peaks = extract_peaks(s_db)
         # We don't have a track_id here, so we pass None
-        input_fingerprints = generate_hashes(peaks, None)
+        input_fingerprints, _ = generate_hashes(peaks, None)
     except Exception as e:
         print(f"[ERROR] Could not generate fingerprints for {file_path}: {e}")
         return []
@@ -63,26 +63,34 @@ def match(file_path: str):
         if processed_path and os.path.exists(processed_path):
             os.remove(processed_path)
 
-    input_hashes = {fp["hash"] for fp in input_fingerprints}
+    input_fingerprints_with_time = {h: t for h, t in input_fingerprints}
 
     # Group database fingerprints by spotify_ID
-    db_hashes_by_song = {}
+    db_fingerprints_by_song = {}
     for db_fp in db_fingerprints:
         spotify_id = db_fp["spotify_ID"]
-        if spotify_id not in db_hashes_by_song:
-            db_hashes_by_song[spotify_id] = set()
-        db_hashes_by_song[spotify_id].add(db_fp["hash"])
+        if spotify_id not in db_fingerprints_by_song:
+            db_fingerprints_by_song[spotify_id] = []
+        db_fingerprints_by_song[spotify_id].append((db_fp["hash"], db_fp["time"]))
 
     # Find potential matches and calculate confidence
     results = []
-    for spotify_id, db_hashes in db_hashes_by_song.items():
-        matching_hashes = input_hashes.intersection(db_hashes)
-        match_count = len(matching_hashes)
+    for spotify_id, db_fps in db_fingerprints_by_song.items():
+        # Find matching hashes and their time offsets
+        time_offsets = []
+        for db_hash, db_time in db_fps:
+            if db_hash in input_fingerprints_with_time:
+                input_time = input_fingerprints_with_time[db_hash]
+                time_offsets.append(db_time - input_time)
 
-        if match_count > 0:
-            # Confidence is the ratio of matched hashes to the total number of unique hashes in the input audio
-            confidence = (match_count / len(db_hashes)) * 100 if len(db_hashes) > 0 else 0
-            
+        if time_offsets:
+            # Find the most common time offset
+            most_common_offset, num_matches = Counter(time_offsets).most_common(1)[0]
+
+            # Calculate confidence based on the number of matches at the best offset
+            # This is a more robust measure of similarity
+            confidence = (num_matches / len(input_fingerprints)) * 100 if len(input_fingerprints) > 0 else 0
+
             song_details = get_song_details(spotify_id)
             if song_details:
                 results.append({

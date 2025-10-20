@@ -111,7 +111,8 @@ def process_spotify_track(track_id: str):
         print(f"[INFO] Extracted {len(peaks)} peaks from spectrogram")
 
         # 6: fingerprinting
-        fingerprints = generate_hashes(peaks, track_id)
+        fingerprints_tuple, _ = generate_hashes(peaks, track_id)
+        fingerprints = [{'hash': int(h), 'time': int(t)} for h, t in fingerprints_tuple]
         print(f"[INFO] Generated {len(fingerprints)} fingerprints")
 
         # 6.5 peak making from spectrogram
@@ -132,5 +133,16 @@ def process_spotify_track(track_id: str):
         return [], True
 
 
-process_spotify_track("4VbpKAZKVxzY7JpGQ34zMj")
+# process_spotify_track("7mykoq6R3BArsSpNDjFQTm")
+# more ids
+ids = [
+    "4yMMsS5QaEcsHZkKwdEyLv",
+    "4VbpKAZKVxzY7JpGQ34zMj",
+    "3lcRYiY6NbuxNTf5hjbyyu",
+    "2yR2sziCF4WEs3klW1F38d",
+    "7mykoq6R3BArsSpNDjFQTm",
+]
+
+for track_id in ids:
+    process_spotify_track(track_id)
 
