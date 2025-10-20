@@ -9,5 +9,7 @@ dist
 
 .env
 __pycache__
+music_fold/
+backend/pipeline/db_mock.json
 downloads
 zext

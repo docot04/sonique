@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.ndimage import maximum_filter
 
-def extract_peaks(spectrogram_db, magnitude_threshold=-20, neighborhood_size=20):
+def extract_peaks(spectrogram_db, magnitude_threshold=-25, neighborhood_size=15):
     """
     Extract identifiable peaks from dB-scaled spectrogram.
     WHY: We need stable audio landmarks that survive noise and compression.

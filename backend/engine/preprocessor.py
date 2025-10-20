@@ -8,6 +8,6 @@ def preprocessor(file_path: str, target_bitrate=64_000, sample_rate=22050) -> st
     audio = AudioSegment.from_file(file_path)
     audio = audio.set_channels(1)
     audio = audio.set_frame_rate(sample_rate)
-    processed_path = file_path.replace(".mp3", "_processed.mp3")
-    audio.export(processed_path, format="mp3", bitrate=f"{target_bitrate//1000}k")
+    processed_path = file_path.replace(".mp3", "_processed.wav")
+    audio.export(processed_path, format="wav")
     return processed_path

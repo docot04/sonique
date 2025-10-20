@@ -24,21 +24,21 @@ def get_song_details(spotify_id):
         print(f"[ERROR] Could not get song details for {spotify_id}: {e}")
         return None
 
-def match(file_path: str, threshold: int = 5):
+def match(file_path: str):
     """
     Matches an audio file against the fingerprint database.
 
     Args:
         file_path (str): Path to the audio file.
-        threshold (int): Minimum number of matching hashes to be considered a match.
 
     Returns:
-        tuple: (bool, dict) where bool is True if a match is found,
-               and dict contains the song details.
+        list: A list of dictionaries, where each dictionary contains
+              'song_details' and 'confidence'. The list is sorted by
+              confidence in descending order.
     """
     if not os.path.exists(file_path):
         print(f"[ERROR] File not found: {file_path}")
-        return False, {}
+        return []
 
     try:
         with open(DB_JSON, "r") as f:
@@ -46,7 +46,7 @@ def match(file_path: str, threshold: int = 5):
         db_fingerprints = db_data.get("fingerprints", [])
     except (FileNotFoundError, json.JSONDecodeError):
         print("[ERROR] Database not found or is corrupted.")
-        return False, {}
+        return []
 
     # Generate fingerprints for the input audio file
     processed_path = None
@@ -58,50 +58,77 @@ def match(file_path: str, threshold: int = 5):
         input_fingerprints = generate_hashes(peaks, None)
     except Exception as e:
         print(f"[ERROR] Could not generate fingerprints for {file_path}: {e}")
-        return False, {}
+        return []
     finally:
         if processed_path and os.path.exists(processed_path):
             os.remove(processed_path)
 
-
     input_hashes = {fp["hash"] for fp in input_fingerprints}
 
-    # Find potential matches
-    matches = []
+    # Group database fingerprints by spotify_ID
+    db_hashes_by_song = {}
     for db_fp in db_fingerprints:
-        if db_fp["hash"] in input_hashes:
-            matches.append(db_fp["spotify_ID"])
+        spotify_id = db_fp["spotify_ID"]
+        if spotify_id not in db_hashes_by_song:
+            db_hashes_by_song[spotify_id] = set()
+        db_hashes_by_song[spotify_id].add(db_fp["hash"])
 
-    if not matches:
-        return False, {}
+    # Find potential matches and calculate confidence
+    results = []
+    for spotify_id, db_hashes in db_hashes_by_song.items():
+        matching_hashes = input_hashes.intersection(db_hashes)
+        match_count = len(matching_hashes)
 
-    # Find the song with the most matches
-    most_common_song = Counter(matches).most_common(1)
-    if not most_common_song or most_common_song[0][1] < threshold:
-        return False, {}
+        if match_count > 0:
+            # Confidence is the ratio of matched hashes to the total number of unique hashes in the input audio
+            confidence = (match_count / len(db_hashes)) * 100 if len(db_hashes) > 0 else 0
+            
+            song_details = get_song_details(spotify_id)
+            if song_details:
+                results.append({
+                    "song_details": song_details,
+                    "confidence": round(confidence, 2)
+                })
 
-    best_match_id = most_common_song[0][0]
-    song_details = get_song_details(best_match_id)
+    # Sort results by confidence
+    results.sort(key=lambda x: x["confidence"], reverse=True)
 
-    if song_details:
-        return True, song_details
-    else:
-        return False, {}
+    return results
+
+import glob
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python match.py <audio_file>")
-        sys.exit(1)
+    music_fold_path = os.path.join(_repo_root, "music_fold")
+    audio_files = glob.glob(os.path.join(music_fold_path, '*.mp3'))
 
-    audio_file = sys.argv[1]
-    found, details = match(audio_file)
+    all_results = []
 
-    if found:
-        print("\n--- Match Found ---")
-        print(f"Title: {details.get('title')}")
-        print(f"Artists: {details.get('artists')}")
-        print(f"Album: {details.get('album')}")
-        print(f"Release Year: {details.get('year')}")
-        print("--------------------")
+    for audio_file in audio_files:
+        print(f"\n--- Matching {os.path.basename(audio_file)} ---")
+        match_results = match(audio_file)
+        if match_results:
+            for result in match_results:
+                result['file_name'] = os.path.basename(audio_file)
+                all_results.append(result)
+        else:
+            print("--- No Match Found ---")
+
+    if all_results:
+        # Sort all results by confidence
+        all_results.sort(key=lambda x: x["confidence"], reverse=True)
+
+        print("\n--- Overall Match Results ---")
+        for i, result in enumerate(all_results[:10]):
+            details = result['song_details']
+            confidence = result['confidence']
+            file_name = result['file_name']
+            print(f"\n--- Rank {i+1} ---")
+            print(f"File: {file_name}")
+            print(f"Title: {details.get('title')}")
+            print(f"Artists: {details.get('artists')}")
+            print(f"Album: {details.get('album')}")
+            print(f"Release Year: {details.get('year')}")
+            print(f"Confidence: {confidence}%")
+            print("--------------------")
     else:
-        print("\n--- No Match Found ---")
+        print("\n--- No Matches Found in any of the files ---")
