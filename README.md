@@ -9,9 +9,9 @@ Sonique will identify songs by listening to short audio samples and matching the
 
 ## Status
 
-- backend routes completed for loading and dashboard
-- frontend completed (recording and matching logic remaining)
-- complete pipeline ready for processing new songs; awaiting merger of fingerprinting algorithm
+- backend routes completed
+- frontend completed
+- complete pipeline ready for processing and indexing new songs
 
 ## Stack
 
@@ -21,8 +21,10 @@ Sonique will identify songs by listening to short audio samples and matching the
 
 ## TODO
 
-- fingerprinting algorithm merge
-- matching pipeline test -> merger
+- fingerprinting algorithm: merge
+- matching pipeline: merger
+- backend feedback route (/feedback)
+- frontend cleanups ('/match' response logic not handled; '/feedback' route not handled; update TouchableWithoutFeedback (depricated) to Pressable)
 
 ## Contributors
 

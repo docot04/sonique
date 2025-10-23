@@ -102,6 +102,90 @@ export const styles = StyleSheet.create({
     fontSize: 16,
   },
 
+  // Recorder
+  recorderWrapper: {
+    height: "40%",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 24,
+  },
+  recorderButton: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: "#1db954",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#1db954",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  recorderUploadButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#333",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  recorderUploadButtonPressed: {
+    backgroundColor: "#555",
+  },
+  recorderUploadText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  recorderOverlayContent: {
+    padding: 16,
+  },
+  recorderOverlayTitle: {
+    color: "#fff",
+    fontWeight: "700",
+    marginBottom: 12,
+    fontSize: 18,
+  },
+  recorderPlayPauseButton: {
+    backgroundColor: "#1db954",
+    padding: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  recorderTimer: {
+    color: "#fff",
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 16,
+    fontSize: 16,
+  },
+
+  recorderOverlayBottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  recorderOverlayButton: {
+    backgroundColor: "#1db954",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  recorderOverlayCancelButton: {
+    backgroundColor: "#ff3b3b",
+  },
+  recorderOverlayButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+
   // List container
   listContainer: {
     flex: 1,
@@ -372,46 +456,6 @@ export const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
     marginBottom: 24,
-  },
-  recorderWrapper: {
-    height: "40%",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 24,
-  },
-  recorderButton: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: "#1db954",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#1db954",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 15,
-  },
-
-  uploadButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#333",
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 25,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
-    transition: "background-color 0.2s ease",
-  },
-  uploadText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
   },
   historyContainer: {
     flex: 1,
