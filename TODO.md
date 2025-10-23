@@ -10,6 +10,7 @@
 - hook to microphone
 - add option to upload audio (additionally drag on desktop)
 - add a util to preprocess the track
+- update TouchableWithoutFeedback to Pressable
 
 # STUFF
 

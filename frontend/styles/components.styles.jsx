@@ -374,9 +374,10 @@ export const styles = StyleSheet.create({
     marginBottom: 24,
   },
   recorderWrapper: {
-    height: "40%", // ~40% of screen height
+    height: "40%",
     justifyContent: "center",
     alignItems: "center",
+    gap: 24,
   },
   recorderButton: {
     width: 140,
@@ -385,11 +386,32 @@ export const styles = StyleSheet.create({
     backgroundColor: "#1db954",
     justifyContent: "center",
     alignItems: "center",
-    boxShadowColor: "#1db954",
-    boxShadowOffset: { width: 0, height: 10 },
-    boxShadowOpacity: 0.6,
-    boxShadowRadius: 20,
+    shadowColor: "#1db954",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
     elevation: 15,
+  },
+
+  uploadButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#333",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
+    transition: "background-color 0.2s ease",
+  },
+  uploadText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
   historyContainer: {
     flex: 1,

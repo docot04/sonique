@@ -4,21 +4,24 @@ ROUTE               TYPE    ACTION
 /load               POST    takes Spotify track/album/playlist ID(s) and runs batch pipeline on multiple workers
 /dashboard          GET     queries the entire DB for the dashboard
 /dashboard          POST    queries the DB for specific entries and returns spotify metadata
+/match              POST    takes user's mp3, runs pipeline to create hash, queries DB for matches, returns matches with %
 TODO
-/match              POST    takes user's mp3, runs pipeline to create hash, queries DB for matches
-/feedback           POST    after match, queries if match was correct
+/feedback           POST    after match, asks user if match was correct
+NOTE: for /feedback, if user's match was correct, save that as a hit to DB and delete the sampled audio, else save the sampled audio along with time of match. additionally, add a rate limiter per user so that users cannot false flag and fill our backend files with garbage
 """
 
 import time
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from engine.spotify_parser import extract_spotify_ids
 from pipeline.load import process_spotify_track
 from pipeline.db import get_dashboard, get_song
+from pipeline.match import process_audio_sample
 
 router = APIRouter()
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB upload size for /match
 
 
 class LoadRequest(BaseModel):
@@ -99,7 +102,6 @@ async def dashboard_post(req: DashboardRequest):
     song = get_song(req.spotify_id)
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
-
     (
         spotify_id,
         youtube_id,
@@ -123,9 +125,18 @@ async def dashboard_post(req: DashboardRequest):
 
 
 @router.post("/match")
-async def match():
-    # placeholder: logic to match audio fingerprint
-    return JSONResponse(content={"status": "success", "message": "Match endpoint hit"})
+async def match(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(".mp3"):
+        raise HTTPException(status_code=400, detail="Only MP3 files are supported")
+    audio_bytes = await file.read()
+
+    if len(audio_bytes) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413, detail="File too large. Max size is 10 MB."
+        )
+    # VERY IMPORTANT: process_audio_sample should accept bytes or a path like object
+    result = process_audio_sample(audio_bytes)
+    return {"status": "success", "result": result}
 
 
 @router.post("/feedback")
