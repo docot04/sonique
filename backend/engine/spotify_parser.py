@@ -51,6 +51,8 @@ def spotify_parser(track_id: str):
     }
 
 
+## why this ???
+
 def extract_spotify_ids(item_id: str, item_type: str):
     """extracts all track IDs from a Spotify album/playlist\n
     **PARAMS:** item_id (spotify album/playlist ID), item_type ("album" / "playlist")\n

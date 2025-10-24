@@ -102,16 +102,11 @@ async def dashboard_post(req: DashboardRequest):
     song = get_song(req.spotify_id)
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
-    (
-        spotify_id,
-        youtube_id,
-        title,
-        artists,
-        cover,
-        album_name,
-        release_date,
-        duration_ms,
-    ) = song
+    # unpack returned song tuple and pad with None if fields missing
+    fields = list(song)
+    if len(fields) < 8:
+        fields += [None] * (8 - len(fields))
+    spotify_id, youtube_id, title, artists, cover, album_name, release_date, duration_ms = fields[:8]
     return {
         "spotify_ID": spotify_id,
         "youtube_ID": youtube_id,

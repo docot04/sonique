@@ -1,183 +1,84 @@
-import { useState, useEffect, useRef } from "react";
-import { Animated, Pressable, View, Text, Alert } from "react-native";
+import { useState, useRef } from "react";
+import { Animated, Pressable, View, Text } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { styles } from "../styles/components.styles";
-import Overlay from "./Overlay";
 import * as DocumentPicker from "expo-document-picker";
-import {
-  useAudioRecorder,
-  AudioModule,
-  RecordingPresets,
-  setAudioModeAsync,
-  useAudioRecorderState,
-  useAudioPlayer,
-} from "expo-audio";
+import { Alert } from "react-native";
 
-export default function Recorder() {
-  const [overlayVisible, setOverlayVisible] = useState(false);
-  const [fileUri, setFileUri] = useState(null);
-  const [playing, setPlaying] = useState(false);
+async function handleFilePick() {
+  try {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "audio/mpeg",
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
 
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const uploadAnim = useRef(new Animated.Value(1)).current;
-  const timerRef = useRef(null);
-  const recordTimeoutRef = useRef(null);
-
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const recorderState = useAudioRecorderState(audioRecorder);
-
-  const player = useAudioPlayer(fileUri);
-
-  useEffect(() => {
-    (async () => {
-      const status = await AudioModule.requestRecordingPermissionsAsync();
-      if (!status.granted) {
-        Alert.alert("Permission to access microphone was denied");
-      }
-
-      await setAudioModeAsync({
-        playsInSilentMode: true,
-        allowsRecording: true,
-      });
-    })();
-  }, []);
-
-  // start recording with 0.5s delay to prevent misfire
-  const handlePressIn = () => {
-    recordTimeoutRef.current = setTimeout(() => {
-      startRecording();
-    }, 500);
-  };
-
-  const handlePressOut = () => {
-    clearTimeout(recordTimeoutRef.current);
-    if (recorderState.isRecording) stopRecording();
-  };
-
-  const startRecording = async () => {
-    try {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(scaleAnim, {
-            toValue: 1.2,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-
-      await audioRecorder.prepareToRecordAsync();
-      audioRecorder.record();
-
-      let elapsedSec = 0;
-      timerRef.current = setInterval(() => {
-        elapsedSec++;
-        if (elapsedSec >= 15) stopRecording();
-      }, 1000);
-    } catch (err) {
-      console.error("Failed to start recording:", err);
-    }
-  };
-
-  const stopRecording = async () => {
-    try {
-      scaleAnim.stopAnimation();
-      scaleAnim.setValue(1);
-      clearInterval(timerRef.current);
-
-      await audioRecorder.stop();
-      setFileUri(audioRecorder.uri);
-      setOverlayVisible(true);
-    } catch (err) {
-      console.error("Failed to stop recording:", err);
-    }
-  };
-
-  const handleFilePick = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "audio/mpeg",
-        copyToCacheDirectory: true,
-        multiple: false,
-      });
-
-      if (result.canceled) return;
-      const file = result.assets[0];
-
-      if (file.size > 10 * 1024 * 1024) {
-        Alert.alert("File too large", "Maximum upload size is 10MB");
-        return;
-      }
-
-      setFileUri(file.uri);
-      setOverlayVisible(true);
-    } catch (err) {
-      console.error("File pick error:", err);
-    }
-  };
-
-  const togglePlayPause = () => {
-    if (!player) return;
-    if (playing) player.pause();
-    else player.play();
-    setPlaying(!playing);
-  };
-
-  const handleCancelPreview = () => {
-    if (player) {
-      player.pause();
-      player.seekTo(0);
-    }
-    setPlaying(false);
-    setFileUri(null);
-    setOverlayVisible(false);
-  };
-
-  const handleDetectSong = async () => {
-    if (!fileUri) return;
-    let blob;
-    try {
-      const blobResponse = await fetch(fileUri);
-      blob = await blobResponse.blob();
-    } catch (error) {
-      console.error("Failed to fetch Blob data:", error);
-      Alert.alert("Error", "Could not read the audio file data.");
+    if (result.canceled) {
+      console.log("User cancelled upload");
       return;
     }
 
-    const formData = new FormData();
+    const file = result.assets[0];
+    console.log("Picked file:", file);
 
-    let fileName = "recorded_audio.mp3"; // idk if i should use a generic name or what
+    // Example:
+    // file.uri -> local URI (works for upload)
+    // file.name -> filename
+    // file.size -> bytes
+    // file.mimeType -> audio/mpeg
 
-    formData.append("file", blob, fileName);
+    Alert.alert("File Selected", `${file.name}`);
+  } catch (err) {
+    console.error("Error picking file:", err);
+    Alert.alert("Error", "Something went wrong while selecting the file.");
+  }
+}
 
-    try {
-      const response = await fetch("http://127.0.0.1:8000/match", {
-        method: "POST",
-        body: formData,
-      });
+export default function Recorder() {
+  const [recording, setRecording] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const uploadAnim = useRef(new Animated.Value(1)).current;
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Detection successful:", result);
-        Alert.alert("Success", "Song detected!");
-      } else {
-        const errorData = await response.json();
-        console.error("Detection failed:", response.status, errorData);
-        Alert.alert(
-          "Error",
-          `Detection failed. Details: ${JSON.stringify(errorData.detail)}`
-        );
-      }
-    } catch (error) {
-      console.error("API call error:", error);
-      Alert.alert("Error", "Network error or failed request.");
-    }
+  const handlePressIn = () => {
+    setRecording(true);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.2,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
+
+  const handlePressOut = () => {
+    setRecording(false);
+    scaleAnim.stopAnimation();
+    scaleAnim.setValue(1);
+  };
+
+  const handleUploadPressIn = () => {
+    Animated.spring(uploadAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 5,
+    }).start();
+  };
+
+  const handleUploadPressOut = () => {
+    Animated.spring(uploadAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 5,
+    }).start();
   };
 
   return (
@@ -189,75 +90,20 @@ export default function Recorder() {
           </Animated.View>
         </Pressable>
       </Animated.View>
-
       <Animated.View style={{ transform: [{ scale: uploadAnim }] }}>
         <Pressable
-          onPressIn={() =>
-            Animated.spring(uploadAnim, {
-              toValue: 0.95,
-              useNativeDriver: true,
-            }).start()
-          }
-          onPressOut={() =>
-            Animated.spring(uploadAnim, {
-              toValue: 1,
-              useNativeDriver: true,
-            }).start()
-          }
+          onPressIn={handleUploadPressIn}
+          onPressOut={handleUploadPressOut}
           onPress={handleFilePick}
           style={({ pressed }) => [
-            styles.recorderUploadButton,
-            pressed && styles.recorderUploadButtonPressed,
+            styles.uploadButton,
+            pressed && { backgroundColor: "#555" },
           ]}
         >
           <FontAwesome name="upload" size={22} color="#fff" />
-          <Text style={styles.recorderUploadText}>Or Upload MP3</Text>
+          <Text style={styles.uploadText}>Or Upload MP3</Text>
         </Pressable>
       </Animated.View>
-
-      {/* overlay with playback */}
-      {fileUri && (
-        <Overlay visible={overlayVisible} onClose={handleCancelPreview}>
-          <View style={styles.recorderOverlayContent}>
-            <Text style={styles.recorderOverlayTitle}>Audio Preview</Text>
-
-            <Pressable
-              style={styles.recorderPlayPauseButton}
-              onPress={togglePlayPause}
-            >
-              <FontAwesome
-                name={playing ? "pause" : "play"}
-                size={32}
-                color="#fff"
-              />
-            </Pressable>
-
-            <View style={styles.recorderOverlayBottomRow}>
-              <Pressable
-                style={[
-                  styles.recorderOverlayButton,
-                  { flex: 1, marginRight: 8 },
-                ]}
-                onPress={handleDetectSong}
-              >
-                <Text style={styles.recorderOverlayButtonText}>
-                  Detect Song
-                </Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.recorderOverlayButton,
-                  styles.recorderOverlayCancelButton,
-                  { flex: 1, marginLeft: 8 },
-                ]}
-                onPress={handleCancelPreview}
-              >
-                <Text style={styles.recorderOverlayButtonText}>Cancel</Text>
-              </Pressable>
-            </View>
-          </View>
-        </Overlay>
-      )}
     </View>
   );
 }
